@@ -3,7 +3,9 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"go-musthave-diploma-tpl/internal/handler"
+	"go-musthave-diploma-tpl/internal/repository/postgres"
 	"log"
 	"net/http"
 
@@ -20,14 +22,41 @@ func main() {
 	fx.New(
 		fx.Provide(
 			config.InitConfig,
-			NewLogger,
+			newLogger,
 			newRouter,
+			newStorage,
 		),
-		fx.Invoke(startServer),
+		fx.Invoke(startServer, startMigrations),
 	).Run()
 }
 
-func NewLogger() (*zap.Logger, error) {
+func startMigrations(cfg *config.Config, logger *zap.Logger) error {
+	if err := postgres.RunMigrations(cfg.DatabaseURI, logger); err != nil {
+		return fmt.Errorf("migrations failed: %w", err) // ← не игнорируем!
+	}
+	return nil
+}
+
+func newStorage(lc fx.Lifecycle, cfg *config.Config, logger *zap.Logger) (postgres.Storager, error) {
+
+	dbStore, err := postgres.NewDBStorage(cfg.DatabaseURI, logger)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to DB: %w", err)
+	}
+
+	logger.Info("Using PostgreSQL storage")
+
+	lc.Append(fx.Hook{
+		OnStop: func(ctx context.Context) error {
+			logger.Info("closing database connection")
+			return dbStore.Close()
+		},
+	})
+
+	return dbStore, nil
+}
+
+func newLogger() (*zap.Logger, error) {
 	logger, err := zap.NewProduction()
 	if err != nil {
 		log.Fatalf("can't initialize zap logger: %v", err)
@@ -51,7 +80,6 @@ func newRouter(log *zap.Logger) chi.Router {
 	return r
 }
 
-// startServer запускает HTTP-сервер с graceful shutdown
 func startServer(
 	lc fx.Lifecycle,
 	cfg *config.Config,
