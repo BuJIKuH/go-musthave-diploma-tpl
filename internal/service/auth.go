@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"go-musthave-diploma-tpl/internal/repository/postgres"
 
 	"go.uber.org/zap"
@@ -30,14 +31,15 @@ func NewAuthService(userRepo UserRepository, secret string, logger *zap.Logger) 
 func checkLogin(login, password string, logger *zap.Logger) (bool, error) {
 	if login == "" || password == "" {
 		logger.Error("login or password is empty")
-		return false, nil
+		return false, errors.New("login and password required")
 	}
 	if login == password {
 		logger.Error("No secure", zap.String("login", login))
-		return false, nil
+		return false, errors.New("login and password should not be equal")
 	}
 	if len(password) < 8 {
 		logger.Error("password is too short, need 8 symbol", zap.String("login", login))
+		return false, errors.New("password too short")
 	}
 	return true, nil
 }

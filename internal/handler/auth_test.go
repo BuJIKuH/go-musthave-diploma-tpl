@@ -96,6 +96,7 @@ func TestAuthHandler_Register(t *testing.T) {
 			handler.Register(w, req)
 
 			res := w.Result()
+			defer res.Body.Close()
 			assert.Equal(t, tt.wantStatusCode, res.StatusCode)
 			if tt.wantHeader != "" {
 				assert.Equal(t, tt.wantHeader, res.Header.Get("Authorization"))
@@ -166,6 +167,7 @@ func TestAuthHandler_Login(t *testing.T) {
 			handler.Login(w, req)
 
 			res := w.Result()
+			defer res.Body.Close()
 			assert.Equal(t, tt.wantStatusCode, res.StatusCode)
 			if tt.wantHeader != "" {
 				assert.Equal(t, tt.wantHeader, res.Header.Get("Authorization"))

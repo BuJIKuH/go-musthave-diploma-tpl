@@ -81,7 +81,7 @@ func TestAuthService_Register(t *testing.T) {
 			login:     "",
 			password:  "strongpassword",
 			repo:      &mockUserRepo{},
-			wantErr:   false,
+			wantErr:   true,
 			wantToken: false,
 		},
 	}

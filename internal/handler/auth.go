@@ -51,6 +51,10 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "login and password required", http.StatusBadRequest)
 			return
 		}
+		if err.Error() == "password too short" {
+			http.Error(w, "password too short", http.StatusBadRequest)
+			return
+		}
 		h.logger.Error("registration error", zap.Error(err))
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
