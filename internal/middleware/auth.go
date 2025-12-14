@@ -9,9 +9,9 @@ import (
 	"go.uber.org/zap"
 )
 
-type contextKey string
+type СontextKey string
 
-const UserCtxKey contextKey = "user_id"
+const UserCtxKey СontextKey = "user_id"
 
 func AuthMiddleware(secret string, logger *zap.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {

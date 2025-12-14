@@ -1,4 +1,3 @@
-// cmd/app/main.go
 package main
 
 import (
@@ -29,9 +28,23 @@ func main() {
 			NewAuthService,
 			NewAuthHandler,
 			NewUserRepository,
+			NewOrdersService,
+			NewOrdersHandler,
+			NewOrderRepository,
 		),
 		fx.Invoke(startServer, startMigrations),
 	).Run()
+}
+
+func NewOrdersService(logger *zap.Logger, orderRepo *postgres.OrderRepository) *service.OrdersService {
+	return service.NewOrdersService(logger, orderRepo)
+}
+
+func NewOrdersHandler(ordersService *service.OrdersService, logger *zap.Logger) *handler.OrdersHandler {
+	return handler.NewOrdersHandler(ordersService, logger)
+}
+func NewOrderRepository(store *postgres.DBStorage) *postgres.OrderRepository {
+	return postgres.NewOrderRepository(store.DB)
 }
 
 func NewUserRepository(store *postgres.DBStorage) *postgres.UserRepository {
@@ -81,7 +94,7 @@ func newLogger() (*zap.Logger, error) {
 	return logger, nil
 }
 
-func newRouter(cfg *config.Config, logger *zap.Logger, authHandler *handler.AuthHandler) chi.Router {
+func newRouter(cfg *config.Config, logger *zap.Logger, authHandler *handler.AuthHandler, ordersHandler *handler.OrdersHandler) chi.Router {
 	if logger != nil {
 		logger.Info("router initialized")
 	}
@@ -99,9 +112,8 @@ func newRouter(cfg *config.Config, logger *zap.Logger, authHandler *handler.Auth
 	r.Group(func(r chi.Router) {
 		r.Use(customMiddleware.AuthMiddleware(cfg.AuthSecret, logger))
 
-		// TODO: добавить orderHandler, balanceHandler и т.д.
-		// r.Post("/api/user/orders", orderHandler.UploadOrder)
-		// r.Get("/api/user/orders", orderHandler.ListOrders)
+		r.Post("/api/user/orders", ordersHandler.UploadOrder)
+		r.Get("/api/user/orders", ordersHandler.ListOrders)
 	})
 
 	return r
