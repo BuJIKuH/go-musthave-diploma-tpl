@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"go-musthave-diploma-tpl/internal/handler"
 	"go-musthave-diploma-tpl/internal/repository/postgres"
+	"go-musthave-diploma-tpl/internal/service"
 	"log"
 	"net/http"
 
@@ -25,19 +26,34 @@ func main() {
 			newLogger,
 			newRouter,
 			newStorage,
+			NewAuthService,
+			NewAuthHandler,
+			NewUserRepository,
 		),
 		fx.Invoke(startServer, startMigrations),
 	).Run()
 }
 
+func NewUserRepository(store *postgres.DBStorage) *postgres.UserRepository {
+	return postgres.NewUserRepository(store.DB)
+}
+
+func NewAuthService(repo *postgres.UserRepository, cfg *config.Config, logger *zap.Logger) *service.AuthService {
+	return service.NewAuthService(repo, cfg.AuthSecret, logger)
+}
+
+func NewAuthHandler(authService *service.AuthService, logger *zap.Logger) *handler.AuthHandler {
+	return handler.NewAuthHandler(authService, logger)
+}
+
 func startMigrations(cfg *config.Config, logger *zap.Logger) error {
 	if err := postgres.RunMigrations(cfg.DatabaseURI, logger); err != nil {
-		return fmt.Errorf("migrations failed: %w", err) // ← не игнорируем!
+		return fmt.Errorf("migrations failed: %w", err)
 	}
 	return nil
 }
 
-func newStorage(lc fx.Lifecycle, cfg *config.Config, logger *zap.Logger) (postgres.Storager, error) {
+func newStorage(lc fx.Lifecycle, cfg *config.Config, logger *zap.Logger) (*postgres.DBStorage, error) {
 
 	dbStore, err := postgres.NewDBStorage(cfg.DatabaseURI, logger)
 	if err != nil {
@@ -65,17 +81,28 @@ func newLogger() (*zap.Logger, error) {
 	return logger, nil
 }
 
-func newRouter(log *zap.Logger) chi.Router {
-	if log != nil {
-		log.Info("router initialized")
+func newRouter(cfg *config.Config, logger *zap.Logger, authHandler *handler.AuthHandler) chi.Router {
+	if logger != nil {
+		logger.Info("router initialized")
 	}
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Recoverer)
-	r.Use(customMiddleware.Logger(log))
+	r.Use(customMiddleware.Logger(logger))
 
 	r.Get("/health", handler.Health)
+
+	r.Post("/api/user/register", authHandler.Register)
+	r.Post("/api/user/login", authHandler.Login)
+
+	r.Group(func(r chi.Router) {
+		r.Use(customMiddleware.AuthMiddleware(cfg.AuthSecret, logger))
+
+		// TODO: добавить orderHandler, balanceHandler и т.д.
+		// r.Post("/api/user/orders", orderHandler.UploadOrder)
+		// r.Get("/api/user/orders", orderHandler.ListOrders)
+	})
 
 	return r
 }

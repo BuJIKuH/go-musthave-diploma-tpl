@@ -10,10 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-type Storager interface {
-	PingContext(ctx context.Context) error
-	Close() error
-}
+var openDB = sql.Open
 
 type DBStorage struct {
 	DB     *sql.DB
@@ -21,7 +18,8 @@ type DBStorage struct {
 }
 
 func NewDBStorage(dns string, logger *zap.Logger) (*DBStorage, error) {
-	db, err := sql.Open("postgres", dns)
+
+	db, err := openDB("postgres", dns)
 	if err != nil {
 		logger.Error("failed to open database", zap.Error(err))
 	}
