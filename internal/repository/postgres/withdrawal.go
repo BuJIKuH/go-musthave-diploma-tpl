@@ -94,6 +94,10 @@ func (r *WithdrawalRepository) ListByUser(
 		}
 		res = append(res, w)
 	}
+	if err := rows.Err(); err != nil {
+		logger.Error("rows iteration error", zap.Error(err))
+		return nil, err
+	}
 
 	return res, nil
 }

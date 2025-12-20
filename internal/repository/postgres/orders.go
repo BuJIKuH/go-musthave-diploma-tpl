@@ -74,6 +74,11 @@ func (r *OrderRepository) GetOrderByUser(ctx context.Context, userID string, log
 		}
 		orders = append(orders, o)
 	}
+	if err := rows.Err(); err != nil {
+		logger.Error("rows iteration error", zap.Error(err))
+		return nil, err
+	}
+
 	return orders, nil
 }
 
@@ -101,6 +106,11 @@ func (r *OrderRepository) GetOrdersForProcessing(ctx context.Context, limit int,
 		}
 		orders = append(orders, o)
 	}
+	if err := rows.Err(); err != nil {
+		logger.Error("rows iteration error", zap.Error(err))
+		return nil, err
+	}
+
 	return orders, nil
 }
 
