@@ -24,3 +24,5 @@ CREATE TABLE withdrawals (
                              processed_at TIMESTAMPTZ DEFAULT NOW(),
                              UNIQUE(user_id, order_number)
 );
+
+CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -74,4 +75,46 @@ func (r *OrderRepository) GetOrderByUser(ctx context.Context, userID string, log
 		orders = append(orders, o)
 	}
 	return orders, nil
+}
+
+func (r *OrderRepository) GetOrdersForProcessing(ctx context.Context, limit int, logger *zap.Logger) ([]Order, error) {
+	query := `
+		SELECT id, number, user_id, status, accrual, uploaded_at
+		FROM orders
+		WHERE status IN ('NEW', 'PROCESSING')
+		ORDER BY uploaded_at
+		LIMIT $1
+	`
+	rows, err := r.db.QueryContext(ctx, query, limit)
+	if err != nil {
+		logger.Error("failed to get orders for processing", zap.Error(err))
+		fmt.Println(query)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var orders []Order
+	for rows.Next() {
+		var o Order
+		if err := rows.Scan(&o.ID, &o.Number, &o.UserID, &o.Status, &o.Accrual, &o.UploadedAt); err != nil {
+			return nil, err
+		}
+		orders = append(orders, o)
+	}
+	return orders, nil
+}
+
+func (r *OrderRepository) UpdateOrderStatus(ctx context.Context, orderID string, status string, accrual *decimal.Decimal, logger *zap.Logger,
+) error {
+	query := `
+		UPDATE orders
+		SET status = $2, accrual = $3
+		WHERE id = $1
+	`
+	_, err := r.db.ExecContext(ctx, query, orderID, status, accrual)
+	if err != nil {
+		logger.Error("failed to update order", zap.Error(err))
+		return err
+	}
+	return nil
 }
