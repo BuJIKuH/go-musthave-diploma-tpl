@@ -8,7 +8,6 @@ import (
 	"go-musthave-diploma-tpl/internal/repository/postgres"
 	"time"
 
-	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
 
@@ -56,7 +55,7 @@ func (w *AccrualWorker) Process(_ context.Context) {
 		case accrual.StatusProcessing:
 			_ = w.OrderRepo.UpdateOrderStatus(dbCtx, order.ID, "PROCESSING", nil, w.Logger)
 		case accrual.StatusProcessed:
-			dec := decimal.NewFromFloat(resp.Accrual)
+			dec := resp.Accrual
 			_ = w.OrderRepo.UpdateOrderStatus(dbCtx, order.ID, "PROCESSED", &dec, w.Logger)
 		}
 	}
