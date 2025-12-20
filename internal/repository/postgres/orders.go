@@ -22,12 +22,12 @@ type OrderRepository struct {
 }
 
 type Order struct {
-	ID         string              `db:"id"`
-	Number     string              `db:"number"`
-	UserID     string              `db:"user_id"`
-	Status     string              `db:"status"`
-	Accrual    decimal.NullDecimal `db:"accrual"`
-	UploadedAt time.Time           `db:"uploaded_at"`
+	ID         string    `db:"id"`
+	Number     string    `db:"number"`
+	UserID     string    `db:"user_id"`
+	Status     string    `db:"status"`
+	Accrual    string    `db:"accrual"`
+	UploadedAt time.Time `db:"uploaded_at"`
 }
 
 func NewOrderRepository(db *sql.DB) *OrderRepository {

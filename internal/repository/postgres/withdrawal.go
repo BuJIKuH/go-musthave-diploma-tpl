@@ -20,7 +20,7 @@ type Withdrawal struct {
 	ID          string
 	UserID      string
 	OrderNumber string
-	Sum         decimal.Decimal
+	Sum         string
 	ProcessedAt time.Time
 }
 
