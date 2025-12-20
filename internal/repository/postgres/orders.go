@@ -37,7 +37,7 @@ func NewOrderRepository(db *sql.DB) *OrderRepository {
 }
 
 func (r *OrderRepository) CreateOrder(ctx context.Context, userID, number string, logger *zap.Logger) error {
-	query := `INSERT INTO orders (user_id,number) VALUES ($1, $2)`
+	query := `INSERT INTO orders (user_id, number) VALUES ($1, $2)`
 
 	_, err := r.db.ExecContext(ctx, query, userID, number)
 	if err != nil {
@@ -63,8 +63,10 @@ func (r *OrderRepository) GetOrderByUser(ctx context.Context, userID string, log
 	rows, err := r.db.QueryContext(ctx, query, userID)
 	if err != nil {
 		logger.Error("failed to query order", zap.Error(err))
+		return nil, err
 	}
 	defer rows.Close()
+
 	var orders []Order
 	for rows.Next() {
 		var o Order
@@ -114,14 +116,25 @@ func (r *OrderRepository) GetOrdersForProcessing(ctx context.Context, limit int,
 	return orders, nil
 }
 
-func (r *OrderRepository) UpdateOrderStatus(ctx context.Context, orderID string, status string, accrual *decimal.Decimal, logger *zap.Logger,
-) error {
+func (r *OrderRepository) UpdateOrderStatus(ctx context.Context, orderID string, status string, accrual *decimal.Decimal, logger *zap.Logger) error {
+	var dbAccrual decimal.NullDecimal
+	if accrual != nil {
+		dbAccrual = decimal.NullDecimal{
+			Decimal: *accrual,
+			Valid:   true,
+		}
+	} else {
+		dbAccrual = decimal.NullDecimal{
+			Valid: false,
+		}
+	}
+
 	query := `
 		UPDATE orders
 		SET status = $2, accrual = $3
 		WHERE id = $1
 	`
-	_, err := r.db.ExecContext(ctx, query, orderID, status, accrual)
+	_, err := r.db.ExecContext(ctx, query, orderID, status, dbAccrual)
 	if err != nil {
 		logger.Error("failed to update order", zap.Error(err))
 		return err
