@@ -57,10 +57,22 @@ func (s *OrdersService) ListOrders(ctx context.Context, userID string) ([]postgr
 }
 
 func isValidOrderNumber(number string) bool {
-	for _, r := range number {
-		if r < '0' || r > '9' {
-			return false
-		}
+	if len(number) < 10 || len(number) > 19 {
+		return false
 	}
-	return true
+
+	sum := 0
+	alt := false
+	for i := len(number) - 1; i >= 0; i-- {
+		d := int(number[i] - '0')
+		if alt {
+			d *= 2
+			if d > 9 {
+				d -= 9
+			}
+		}
+		sum += d
+		alt = !alt
+	}
+	return sum%10 == 0
 }
