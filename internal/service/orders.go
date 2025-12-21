@@ -8,6 +8,8 @@ import (
 	"go.uber.org/zap"
 )
 
+var ErrOrderAlreadyUploaded = errors.New("order already uploaded by user")
+
 type OrdersServicer interface {
 	CreateOrder(ctx context.Context, userID, number string, logger *zap.Logger) error
 	GetOrderByUser(ctx context.Context, userID string, logger *zap.Logger) ([]postgres.Order, error)
@@ -40,7 +42,7 @@ func (s *OrdersService) UploadOrder(ctx context.Context, userID, number string) 
 			if getErr == nil {
 				for _, o := range userOrders {
 					if o.Number == number {
-						return nil
+						return ErrOrderAlreadyUploaded
 					}
 				}
 			}

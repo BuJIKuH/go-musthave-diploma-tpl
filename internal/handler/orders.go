@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"go-musthave-diploma-tpl/internal/middleware"
+	"go-musthave-diploma-tpl/internal/service"
 	"io"
 	"net/http"
 	"time"
@@ -60,6 +61,9 @@ func (h *OrdersHandler) UploadOrder(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "invalid order number", http.StatusUnprocessableEntity)
 		case errors.Is(err, postgres.ErrOrderExists):
 			http.Error(w, "order already exists", http.StatusConflict)
+		case errors.Is(err, service.ErrOrderAlreadyUploaded):
+			w.WriteHeader(http.StatusOK)
+			return
 		default:
 			h.logger.Error("upload order error", zap.Error(err))
 			http.Error(w, "internal error", http.StatusInternalServerError)
