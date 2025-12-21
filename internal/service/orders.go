@@ -33,8 +33,17 @@ func (s *OrdersService) UploadOrder(ctx context.Context, userID, number string) 
 		return postgres.ErrInvalidOrder
 	}
 
-	if err := s.orderRepo.CreateOrder(ctx, userID, number, s.logger); err != nil {
+	err := s.orderRepo.CreateOrder(ctx, userID, number, s.logger)
+	if err != nil {
 		if errors.Is(err, postgres.ErrOrderExists) {
+			userOrders, getErr := s.orderRepo.GetOrderByUser(ctx, userID, s.logger)
+			if getErr == nil {
+				for _, o := range userOrders {
+					if o.Number == number {
+						return nil
+					}
+				}
+			}
 			return postgres.ErrOrderExists
 		}
 		return err

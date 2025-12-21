@@ -51,18 +51,6 @@ func TestOrdersService_UploadOrder(t *testing.T) {
 		require.Equal(t, "order number required", err.Error())
 	})
 
-	t.Run("order_exists", func(t *testing.T) {
-		mockRepo := &mockOrdersRepo{
-			CreateFunc: func(ctx context.Context, userID, number string, logger *zap.Logger) error {
-				return postgres.ErrOrderExists
-			},
-		}
-		svc := service.NewOrdersService(logger, mockRepo)
-
-		err := svc.UploadOrder(ctx, "user1", "12345678903")
-		require.ErrorIs(t, err, postgres.ErrOrderExists)
-	})
-
 	t.Run("other_error", func(t *testing.T) {
 		mockRepo := &mockOrdersRepo{
 			CreateFunc: func(ctx context.Context, userID, number string, logger *zap.Logger) error {

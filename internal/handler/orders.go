@@ -67,7 +67,7 @@ func (h *OrdersHandler) UploadOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusAccepted) // 202
+	w.WriteHeader(http.StatusAccepted)
 }
 
 func (h *OrdersHandler) ListOrders(w http.ResponseWriter, r *http.Request) {
