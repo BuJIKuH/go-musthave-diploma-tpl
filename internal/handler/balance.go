@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"go-musthave-diploma-tpl/internal/middleware"
 	"net/http"
+	"time"
 
 	"go-musthave-diploma-tpl/internal/repository/postgres"
 	"go-musthave-diploma-tpl/internal/service"
@@ -11,6 +12,12 @@ import (
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
+
+type withdrawalResponse struct {
+	Order       string  `json:"order"`
+	Sum         float32 `json:"sum"`
+	ProcessedAt string  `json:"processed_at"`
+}
 
 type BalanceHandler struct {
 	service *service.BalanceService
@@ -34,9 +41,12 @@ func (h *BalanceHandler) GetBalance(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := map[string]decimal.Decimal{
-		"current":   current,
-		"withdrawn": withdrawn,
+	curF, _ := current.Float64()
+	withF, _ := withdrawn.Float64()
+
+	resp := map[string]float32{
+		"current":   float32(curF),
+		"withdrawn": float32(withF),
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -91,6 +101,18 @@ func (h *BalanceHandler) ListWithdrawals(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	resp := make([]withdrawalResponse, 0, len(list))
+	for _, wdr := range list {
+		d, _ := decimal.NewFromString(wdr.Sum)
+		f, _ := d.Float64()
+
+		resp = append(resp, withdrawalResponse{
+			Order:       wdr.OrderNumber,
+			Sum:         float32(f),
+			ProcessedAt: wdr.ProcessedAt.Format(time.RFC3339),
+		})
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(list)
+	json.NewEncoder(w).Encode(resp)
 }
