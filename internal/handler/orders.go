@@ -58,6 +58,8 @@ func (h *OrdersHandler) UploadOrder(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case errors.Is(err, postgres.ErrOrderExists):
 			http.Error(w, "order already exists", http.StatusConflict)
+		case errors.Is(err, postgres.ErrInvalidOrder):
+			http.Error(w, "invalid order number", http.StatusUnprocessableEntity)
 		default:
 			h.logger.Error("upload order error", zap.Error(err))
 			http.Error(w, "internal error", http.StatusInternalServerError)

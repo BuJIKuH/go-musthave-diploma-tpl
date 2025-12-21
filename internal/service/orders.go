@@ -29,6 +29,9 @@ func (s *OrdersService) UploadOrder(ctx context.Context, userID, number string) 
 	if number == "" {
 		return errors.New("order number required")
 	}
+	if !isValidOrderNumber(number) {
+		return postgres.ErrInvalidOrder
+	}
 
 	if err := s.orderRepo.CreateOrder(ctx, userID, number, s.logger); err != nil {
 		if errors.Is(err, postgres.ErrOrderExists) {
@@ -42,4 +45,16 @@ func (s *OrdersService) UploadOrder(ctx context.Context, userID, number string) 
 
 func (s *OrdersService) ListOrders(ctx context.Context, userID string) ([]postgres.Order, error) {
 	return s.orderRepo.GetOrderByUser(ctx, userID, s.logger)
+}
+
+func isValidOrderNumber(number string) bool {
+	if len(number) < 10 || len(number) > 19 {
+		return false
+	}
+	for _, r := range number {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
 }
