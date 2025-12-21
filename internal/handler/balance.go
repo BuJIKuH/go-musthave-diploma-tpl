@@ -3,28 +3,28 @@ package handler
 import (
 	"encoding/json"
 	"go-musthave-diploma-tpl/internal/middleware"
+	"go-musthave-diploma-tpl/internal/service"
 	"net/http"
 	"time"
 
 	"go-musthave-diploma-tpl/internal/repository/postgres"
-	"go-musthave-diploma-tpl/internal/service"
 
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
 
-type withdrawalResponse struct {
+type WithdrawalResponse struct {
 	Order       string  `json:"order"`
 	Sum         float32 `json:"sum"`
 	ProcessedAt string  `json:"processed_at"`
 }
 
 type BalanceHandler struct {
-	service *service.BalanceService
+	service service.BalanceServicer
 	logger  *zap.Logger
 }
 
-func NewBalanceHandler(s *service.BalanceService, logger *zap.Logger) *BalanceHandler {
+func NewBalanceHandler(s service.BalanceServicer, logger *zap.Logger) *BalanceHandler {
 	return &BalanceHandler{service: s, logger: logger}
 }
 
@@ -101,12 +101,12 @@ func (h *BalanceHandler) ListWithdrawals(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	resp := make([]withdrawalResponse, 0, len(list))
+	resp := make([]WithdrawalResponse, 0, len(list))
 	for _, wdr := range list {
 		d, _ := decimal.NewFromString(wdr.Sum)
 		f, _ := d.Float64()
 
-		resp = append(resp, withdrawalResponse{
+		resp = append(resp, WithdrawalResponse{
 			Order:       wdr.OrderNumber,
 			Sum:         float32(f),
 			ProcessedAt: wdr.ProcessedAt.Format(time.RFC3339),

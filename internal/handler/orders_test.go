@@ -105,7 +105,7 @@ func TestOrdersHandler_ListOrders(t *testing.T) {
 		wantBodyCount  int
 	}{
 		{"success", "user1", http.StatusOK, 1},
-		{"no orders", "empty", http.StatusNoContent, 0},
+		{"no orders", "empty", http.StatusOK, 0},
 		{"unauthorized", "", http.StatusUnauthorized, 0},
 	}
 

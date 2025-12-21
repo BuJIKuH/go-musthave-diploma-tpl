@@ -9,6 +9,11 @@ import (
 	"go.uber.org/zap"
 )
 
+type BalanceServicer interface {
+	GetBalance(ctx context.Context, userID string) (current, withdrawn decimal.Decimal, err error)
+	Withdraw(ctx context.Context, userID, orderNumber string, sum decimal.Decimal) error
+	ListWithdrawals(ctx context.Context, userID string) ([]postgres.Withdrawal, error)
+}
 type BalanceService struct {
 	withdrawRepo *postgres.WithdrawalRepository
 	logger       *zap.Logger
