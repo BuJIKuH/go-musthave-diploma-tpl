@@ -85,7 +85,8 @@ func (h *OrdersHandler) ListOrders(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(orders) == 0 {
-		w.WriteHeader(http.StatusNoContent)
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("[]"))
 		return
 	}
 
