@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 const (
@@ -22,9 +24,9 @@ var (
 )
 
 type OrderResponse struct {
-	Order   string `json:"order"`
-	Status  string `json:"status"`
-	Accrual string `json:"accrual,omitempty"`
+	Order   string          `json:"order"`
+	Status  string          `json:"status"`
+	Accrual decimal.Decimal `json:"accrual,omitempty"`
 }
 
 type Client struct {

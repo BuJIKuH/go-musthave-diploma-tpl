@@ -7,6 +7,7 @@ import (
 	"go-musthave-diploma-tpl/internal/middleware"
 	"io"
 	"net/http"
+	"time"
 
 	"go-musthave-diploma-tpl/internal/repository/postgres"
 
@@ -16,6 +17,13 @@ import (
 type OrdersServicer interface {
 	UploadOrder(ctx context.Context, userID, number string) error
 	ListOrders(ctx context.Context, userID string) ([]postgres.Order, error)
+}
+
+type orderResponse struct {
+	Number     string   `json:"number"`
+	Status     string   `json:"status"`
+	Accrual    *float32 `json:"accrual,omitempty"`
+	UploadedAt string   `json:"uploaded_at"`
 }
 
 type OrdersHandler struct {
@@ -79,6 +87,24 @@ func (h *OrdersHandler) ListOrders(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	resp := make([]orderResponse, 0, len(orders))
+
+	for _, o := range orders {
+		r := orderResponse{
+			Number:     o.Number,
+			Status:     o.Status,
+			UploadedAt: o.UploadedAt.Format(time.RFC3339),
+		}
+
+		if o.Accrual.Valid {
+			f64, _ := o.Accrual.Decimal.Float64()
+			f32 := float32(f64)
+			r.Accrual = &f32
+		}
+
+		resp = append(resp, r)
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(orders)
+	json.NewEncoder(w).Encode(resp)
 }
