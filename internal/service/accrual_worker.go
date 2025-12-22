@@ -29,8 +29,8 @@ func NewAccrualClient(cfg *config.Config) *accrual.Client {
 	return accrual.NewClient(cfg.AccrualSystemAddress)
 }
 
-func (w *AccrualWorker) Process(_ context.Context) {
-	dbCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+func (w *AccrualWorker) Process(ctx context.Context) {
+	dbCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
 	orders, err := w.OrderRepo.GetOrdersForProcessing(dbCtx, 10, w.Logger)
@@ -40,6 +40,11 @@ func (w *AccrualWorker) Process(_ context.Context) {
 	}
 
 	for _, order := range orders {
+		if dbCtx.Err() != nil {
+			w.Logger.Info("context cancelled, stopping accrual worker")
+			return
+		}
+
 		resp, err := w.Client.GetOrder(dbCtx, order.Number)
 		if err != nil {
 			if errors.Is(err, accrual.ErrTooManyRequests) {

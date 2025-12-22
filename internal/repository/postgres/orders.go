@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 
@@ -95,7 +94,6 @@ func (r *OrderRepository) GetOrdersForProcessing(ctx context.Context, limit int,
 	rows, err := r.db.QueryContext(ctx, query, limit)
 	if err != nil {
 		logger.Error("failed to get orders for processing", zap.Error(err))
-		fmt.Println(query)
 		return nil, err
 	}
 	defer rows.Close()
