@@ -8,7 +8,6 @@ import (
 	"go-musthave-diploma-tpl/internal/handler"
 	"go-musthave-diploma-tpl/internal/repository/postgres"
 	"go-musthave-diploma-tpl/internal/service"
-	"log"
 	"net/http"
 	"time"
 
@@ -52,8 +51,7 @@ func main() {
 func newLogger() (*zap.Logger, error) {
 	logger, err := zap.NewProduction()
 	if err != nil {
-		log.Fatalf("can't initialize zap logger: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("failed to initialize zap logger: %w", err)
 	}
 	return logger, nil
 }
