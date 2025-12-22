@@ -181,10 +181,19 @@ func StartAccrualWorker(lc fx.Lifecycle, worker *service.AccrualWorker, logger *
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
 			logger.Info("starting accrual worker")
+
 			go func() {
+				ticker := time.NewTicker(5 * time.Second)
+				defer ticker.Stop()
+
 				for {
-					worker.Process(ctx)
-					time.Sleep(5 * time.Second)
+					select {
+					case <-ctx.Done():
+						logger.Info("accrual worker stopped", zap.Error(ctx.Err()))
+						return
+					case <-ticker.C:
+						worker.Process(ctx)
+					}
 				}
 			}()
 			return nil
